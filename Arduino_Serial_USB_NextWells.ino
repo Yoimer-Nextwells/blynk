@@ -51,12 +51,13 @@
 
 **************************************************************/
 
+
 /***************************************NextWells-BLINK-ARDUINO UNO****************************************************/
 
 // You could use a spare Hardware Serial on boards that have it (like Mega)
 #include <SoftwareSerial.h>
 SoftwareSerial DebugSerial(2, 3); // RX, TX
-
+#define BLYNK_PRINT Serial
 #define BLYNK_PRINT DebugSerial
 #include <BlynkSimpleStream.h>
 #include <SimpleTimer.h>
@@ -69,23 +70,39 @@ SoftwareSerial DebugSerial(2, 3); // RX, TX
 
 char auth[] = "369505e836ed435abe9c7e9db2db5471";
 
+/***************************************************** Variables Declaration ********************************************************/
 float temp = 1.10; // Virtual Temperature
+float humd = 0.0;  // Virtual Humidity
 
+/***************************************************** Functions *******************************************************************/
 SimpleTimer timer;
-
-// This function sends Arduino's up time every second to Virtual Pin (5).
+// This function sends Arduino's up time every second to Virtual Pin (5) and Virtual Pin (1).
 // In the app, Widget's reading frequency should be set to PUSH. This means
 // that you define how often to send data to Blynk App.
+
 void myTimerEvent()
 {
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
   
   temp += 0.25; // Increment the temperature by 0.25 Celsius degree
-  
-  //Blynk.virtualWrite(V5, millis() / 1000);
-  
-  Blynk.virtualWrite(V5, temp);
+  humd += 0.5;  // Increment Humidity by 0.5 %
+  Blynk.virtualWrite(V5, temp);    // Reading temperature on Blynk App
+  Blynk.virtualWrite(V1, humd);    // Reading humidity on Blynk App
+} 
+
+
+// This function will be called every time Slider Widget
+// in Blynk app writes values to the Virtual Pin 2
+BLYNK_WRITE(V2)
+{
+  ////int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
+  int pinValue = param.asInt(); // assigning incoming value from pin V2 to a variable
+  // You can also use:
+  // String i = param.asStr();
+  // double d = param.asDouble();
+  Serial.print("V2 Slider value is: ");
+  Serial.println(pinValue);
 }
 
 void setup()
@@ -98,23 +115,21 @@ void setup()
   Serial.begin(9600);
   Blynk.begin(Serial, auth);
   
-  /* ////Enabling Virtual Pins
-  BLYNK_WRITE(); */
-
   // Setup a function to be called every second
   timer.setInterval(1000L, myTimerEvent);
+
+  // Send e-mail when your hardware gets connected to Blynk Server
+  // Just put the recepient's "e-mail address", "Subject" and the "message body"
+  Blynk.email("yoimer.nextwells@gmail.com", "NextWells", "My Blynk project is online.");
+  // Or, if you want to use the email specified in the App (like for App Export):
+  //Blynk.email("Subject: Button Logger", "You just pushed the button...");
+
+   
 }
-
-
-
-
 
 void loop()
 {
   Blynk.run();
-
-  /*//// Writing a string to virtual pin 1. This will be displayed on the Blynk App
-  Blynk.virtualWrite(1, "abcdeeee"); */
   
   timer.run(); // Initiates SimpleTimer
 }
