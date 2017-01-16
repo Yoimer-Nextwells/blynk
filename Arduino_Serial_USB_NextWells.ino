@@ -75,6 +75,9 @@ float temp = 1.10; // Virtual Temperature
 float humd = 0.0;  // Virtual Humidity
 
 /***************************************************** Functions *******************************************************************/
+
+/***************************Timer***************/
+
 SimpleTimer timer;
 // This function sends Arduino's up time every second to Virtual Pin (5) and Virtual Pin (1).
 // In the app, Widget's reading frequency should be set to PUSH. This means
@@ -91,6 +94,7 @@ void myTimerEvent()
   Blynk.virtualWrite(V1, humd);    // Reading humidity on Blynk App
 } 
 
+/****************Writing from server************/
 
 // This function will be called every time Slider Widget
 // in Blynk app writes values to the Virtual Pin 2
@@ -104,6 +108,34 @@ BLYNK_WRITE(V2)
   Serial.print("V2 Slider value is: ");
   Serial.println(pinValue);
 }
+
+/****************Writing from server using a Terminal************/
+// Attach virtual serial terminal to Virtual Pin V3
+WidgetTerminal terminal(V3);
+
+// You can send commands from Terminal to your hardware. Just use
+// the same Virtual Pin as your Terminal Widget
+BLYNK_WRITE(V3)
+{
+
+  // if you type "Marco" into Terminal Widget - it will respond: "Polo:"
+  if (String("Marco") == param.asStr()) {
+    terminal.println("You said: 'Marco'") ;
+    terminal.println("I said: 'Polo'");
+
+  } else {
+
+    // Send it back
+    terminal.print("You said:");
+    terminal.write(param.getBuffer(), param.getLength());
+    terminal.println();
+  }
+
+  // Ensure everything is sent
+  terminal.flush();
+}
+
+
 
 void setup()
 {
@@ -124,7 +156,13 @@ void setup()
   // Or, if you want to use the email specified in the App (like for App Export):
   //Blynk.email("Subject: Button Logger", "You just pushed the button...");
 
-   
+  // This will print Blynk Software version to the Terminal Widget when
+  // your hardware gets connected to Blynk Server
+  terminal.println(F("Blynk v" BLYNK_VERSION ": Device started. NextWells VENEZUELA-USA"));
+  terminal.println(F("-------------"));
+  terminal.println(F("Type 'Marco' and get a reply, or type"));
+  terminal.println(F("anything else and get it printed back."));
+  terminal.flush();
 }
 
 void loop()
